@@ -1,20 +1,14 @@
 # Data Manipulation
-pandas
-numpy
+pandas==2.2.0
+numpy==1.26.4
 
 # Natural Language Processing
-nltk
+nltk==3.8.1
 
 # Machine Learning & Deep Learning
-scikit-learn
-tensorflow
-keras
+tensorflow==2.16.1 
+scikit-learn==1.4.1
 
-# Visualization (for plotting history and confusion matrix)
-matplotlib
-seaborn
-
-# Utility
-re
-zipfile
-os
+# Visualization
+matplotlib==3.8.3
+seaborn==0.13.2
