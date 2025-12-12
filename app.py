@@ -1,246 +1,205 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Converted from Jupyter Notebook: notebook.ipynb
-Conversion Date: 2025-12-12T08:15:39.294Z
-"""
-
+import streamlit as st
 import pandas as pd
-
-# ### Load the  Data
-
-
-# Fake=pd.read_csv("Fake.csv")
-# true=pd.read_csv("True.csv")
-
-Fake=pd.read_csv('https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset/blob/main/Fake.csv')
-true=pd.read_csv('https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset/blob/main/True.csv')
-
-Fake['label']=0
-
-Fake
-
-true['label']=1
-
-true
-
-Fake.drop(columns=["title","date","subject"],inplace=True)
-true.drop(columns=["title","date","subject"],inplace=True)
-
-Fake.head()
-
-true.head()
-
-News=pd.concat([Fake,true],ignore_index=True)
-News
-
-News.info()
-
-News.isnull().sum()
-
-News.duplicated().sum()
-
-News.drop_duplicates(inplace=True)
-News.duplicated().sum()
-
+import numpy as np
 import re
 import nltk
-nltk.download('punkt_tab')
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-import numpy as np
 
-# --- 1. SIMPLIFIED NLTK DOWNLOADS ---
-# This uses the default NLTK path, which is usually more reliable for PunktTokenizer.
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix
 
-print("Attempting simplified NLTK downloads...")
-# If these files are already downloaded, NLTK will confirm they are up to date.
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-print("NLTK initialization complete.")
+import tensorflow as tf
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.optimizers import Adam
+from keras.layers import Embedding, LSTM, Dense, Input, GlobalMaxPooling1D, Dropout
+from tensorflow.keras.models import Model
 
-# --- 2. Initialize tools globally ---
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# -----------------------------------------
+# STREAMLIT HEADER
+# -----------------------------------------
+st.title("📰 Fake News Detector — LSTM Model")
+st.write("Real-time text classification using your custom dataset hosted on HuggingFace.")
+
+
+# -----------------------------------------
+# LOAD DATA FROM HUGGING FACE
+# -----------------------------------------
+st.subheader("📥 Loading Dataset...")
+
+Fake = pd.read_csv(
+    "https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset/resolve/main/Fake.csv"
+)
+true = pd.read_csv(
+    "https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset/resolve/main/True.csv"
+)
+
+Fake["label"] = 0
+true["label"] = 1
+
+Fake.drop(columns=["title", "date", "subject"], inplace=True)
+true.drop(columns=["title", "date", "subject"], inplace=True)
+
+News = pd.concat([Fake, true], ignore_index=True)
+News.drop_duplicates(inplace=True)
+
+st.success("Dataset Loaded Successfully!")
+st.write(News.head())
+
+
+# -----------------------------------------
+# NLTK SETUP
+# -----------------------------------------
+nltk.download("punkt")
+nltk.download("stopwords")
+nltk.download("wordnet")
+nltk.download("omw-1.4")
+
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
-# --- 3. Text Preprocessing Function ---
 
+# -----------------------------------------
+# TEXT PREPROCESSING FUNCTION
+# -----------------------------------------
 def process_text(text):
-    """
-    Cleans, tokenizes, lemmatizes, and removes stop words/short words from text.
-    Returns the processed text as a single string.
-    """
-    # Ensure input is treated as a string
-    text = str(text)
+    text = str(text).lower()
+    text = re.sub(r"[^a-z\s]", " ", text)
+    text = re.sub(r"\s+[a-z]\s+", " ", text)
+    text = re.sub(r"\s+", " ", text)
 
-    # 1. Convert to lowercase
-    text = text.lower()
-
-    # 2. Remove all non-alphabetic characters (preserving spaces)
-    text = re.sub(r'[^a-z\s]', ' ', text)
-
-    # 3. Remove single characters and extra white space
-    text = re.sub(r'\s+[a-z]\s+', ' ', text)
-    text = re.sub(r'\s+', ' ', text, flags=re.I)
-
-    # 4. Tokenize the text (The line that caused the error)
     words = word_tokenize(text)
 
-    # 5. Lemmatization, Stop Word Removal, and Length Filtering
     processed_words = [
         lemmatizer.lemmatize(word)
         for word in words
         if word not in stop_words and len(word) > 3
     ]
-
-    # 6. Return the tokens joined back into a single string for vectorization
     return " ".join(processed_words)
 
-# --- Test the function with a sample ---
-sample_text = "The quick brown fox jumps over the lazy dog, 123 times a day!"
-print("\nTesting the function:")
-print(f"Original: {sample_text}")
-print(f"Processed: {process_text(sample_text)}")
 
-x=News.drop('label',axis=1)
-y=News.label
-
-texts=list(x['text'])
-
-cleaned_text = [process_text(text) for text in texts]
-
-print(cleaned_text[:10])
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(cleaned_text, y, test_size=0.2, random_state=42)
-
-!pip install tensorflow
-
-import tensorflow as tf
-
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+st.subheader("🧼 Preprocessing Text...")
+texts = list(News["text"])
+cleaned_text = [process_text(t) for t in texts]
+st.success("Text Preprocessing Complete!")
 
 
+# -----------------------------------------
+# TRAIN-TEST SPLIT
+# -----------------------------------------
+X_train, X_test, y_train, y_test = train_test_split(
+    cleaned_text, News["label"], test_size=0.2, random_state=42
+)
+
+
+# -----------------------------------------
+# TOKENIZATION & PADDING
+# -----------------------------------------
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(X_train)
-word_idx = tokenizer.word_index  # Corrected syntax for accessing word index
-v = len(word_idx)
-print("the size of vocab =", v)  # Corrected spacing
-X_train = tokenizer.texts_to_sequences(X_train)
-X_test = tokenizer.texts_to_sequences(X_test)
 
+vocab_size = len(tokenizer.word_index)
 
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+X_train_seq = tokenizer.texts_to_sequences(X_train)
+X_test_seq = tokenizer.texts_to_sequences(X_test)
 
 maxlen = 150
-X_train = pad_sequences(X_train,maxlen=maxlen)
-X_test = pad_sequences(X_test,maxlen=maxlen)
+X_train_pad = pad_sequences(X_train_seq, maxlen=maxlen)
+X_test_pad = pad_sequences(X_test_seq, maxlen=maxlen)
 
 
+# -----------------------------------------
+# LABEL ENCODING
+# -----------------------------------------
+label_encoder = LabelEncoder()
+y_train_enc = label_encoder.fit_transform(y_train)
+y_test_enc = label_encoder.transform(y_test)
 
-y.value_counts()
-
-from keras.models import Sequential
-from keras.layers import Embedding, LSTM, Dense,Input,GlobalMaxPooling1D,Dropout
-from tensorflow.keras.models import Model
-from keras import optimizers
-import numpy as np
-from tensorflow.keras.optimizers import Adam
+y_train_hot = tf.keras.utils.to_categorical(y_train_enc)
+y_test_hot = tf.keras.utils.to_categorical(y_test_enc)
 
 
-
-inputt=Input(shape=(maxlen,))
-learning_rate = 0.0001
-x=Embedding(v+1,100)(inputt)
+# -----------------------------------------
+# BUILD LSTM MODEL
+# -----------------------------------------
+input_layer = Input(shape=(maxlen,))
+x = Embedding(vocab_size + 1, 100)(input_layer)
 x = Dropout(0.5)(x)
-x = LSTM(150,return_sequences=True)(x)
+x = LSTM(150, return_sequences=True)(x)
 x = Dropout(0.5)(x)
 x = GlobalMaxPooling1D()(x)
-x = Dense(64, activation='relu')(x)
+x = Dense(64, activation="relu")(x)
 x = Dropout(0.5)(x)
-x = Dense(2, activation='softmax')(x)
+output_layer = Dense(2, activation="softmax")(x)
 
-model = Model(inputt, x)
+model = Model(input_layer, output_layer)
+optimizer = Adam(learning_rate=0.0001)
+model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
 
-# Define optimizer with specified learning rate
-optimizer = Adam(learning_rate=learning_rate)
-
-model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-
-
-# -make label encoder to the labels to pass it to the model:
-
-
-from sklearn.preprocessing import LabelEncoder
-
-label_encoder = LabelEncoder()
-y_train_encoded = label_encoder.fit_transform(y_train)
-y_test_encoded = label_encoder.transform(y_test)
+st.subheader("🧠 Training LSTM Model...")
+history = model.fit(
+    X_train_pad, y_train_hot, epochs=5, validation_data=(X_test_pad, y_test_hot)
+)
+st.success("Model Training Complete!")
 
 
-# transform it to be categorical
+# -----------------------------------------
+# TRAINING GRAPHS
+# -----------------------------------------
+st.subheader("📊 Training Accuracy & Loss")
+
+fig_acc = plt.figure()
+plt.plot(history.history["accuracy"])
+plt.plot(history.history["val_accuracy"])
+plt.title("Accuracy")
+plt.legend(["Train", "Validation"])
+st.pyplot(fig_acc)
+
+fig_loss = plt.figure()
+plt.plot(history.history["loss"])
+plt.plot(history.history["val_loss"])
+plt.title("Loss")
+plt.legend(["Train", "Validation"])
+st.pyplot(fig_loss)
 
 
-import tensorflow as tf
+# -----------------------------------------
+# CONFUSION MATRIX
+# -----------------------------------------
+y_pred_probs = model.predict(X_test_pad)
+y_pred = np.argmax(y_pred_probs, axis=1)
+y_true = np.argmax(y_test_hot, axis=1)
 
-y_train_one_hot = tf.keras.utils.to_categorical(y_train_encoded)
-y_test_one_hot = tf.keras.utils.to_categorical(y_test_encoded)
+conf = confusion_matrix(y_true, y_pred)
 
-# # train the model:
+st.subheader("🟥 Confusion Matrix")
 
-
-
-history = model.fit(X_train, y_train_one_hot, epochs=15, validation_data=(X_test, y_test_one_hot))
-
-
-import matplotlib.pyplot as plt
-
-# Plot training & validation accuracy values
-plt.plot(history.history['accuracy'],color='Purple')
-plt.plot(history.history['val_accuracy'],color='Red')
-plt.title('Model accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.show()
-
-# Plot training & validation loss values
-plt.plot(history.history['loss'],color='Purple')
-plt.plot(history.history['val_loss'],color='Red')
-plt.title('Model loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.show()
-
-# # Accuracy:
+fig_cm = plt.figure(figsize=(8, 6))
+sns.heatmap(conf, annot=True, cmap="Reds", fmt="d", xticklabels=["Fake", "Real"], yticklabels=["Fake", "Real"])
+st.pyplot(fig_cm)
 
 
-# Evaluate the model on the test data
-loss, accuracy = model.evaluate(X_test, y_test_one_hot)
+# -----------------------------------------
+# LIVE PREDICTOR
+# -----------------------------------------
+st.subheader("📝 Live Fake News Check")
 
-print("Test Loss:", loss)
-print("Test Accuracy:", accuracy)
+user_input = st.text_area("Enter news text to check:")
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics import confusion_matrix
-import numpy as np
+if st.button("Predict"):
+    processed = process_text(user_input)
+    seq = tokenizer.texts_to_sequences([processed])
+    pad = pad_sequences(seq, maxlen=maxlen)
+    pred = model.predict(pad)[0]
 
-
-y_pred_probs = model.predict(X_test)
-y_pred_labels = np.argmax(y_pred_probs, axis=1)
-y_true_labels = np.argmax(y_test_one_hot, axis=1)
-conf_matrix = confusion_matrix(y_true_labels, y_pred_labels)
-plt.figure(figsize=(8, 6))
-sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Reds', 
-            xticklabels=['Fake', 'Real'], 
-            yticklabels=['Fake', 'Real'])
-plt.xlabel('Predicted')
-plt.ylabel('True')
-plt.title('Confusion Matrix')
-plt.show()
+    if np.argmax(pred) == 0:
+        st.error("🚨 This looks FAKE!")
+    else:
+        st.success("✔ This looks REAL!")
