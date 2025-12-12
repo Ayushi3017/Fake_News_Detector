@@ -21,7 +21,6 @@ A lightweight NLP-powered web app that classifies news articles as **Real** or *
 ├── app.py
 ├── requirements.txt
 ├── README.md
-└── notebook.ipynb
 ```
 
 ---
