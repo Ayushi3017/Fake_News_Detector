@@ -1,19 +1,102 @@
-🧐 Key Concepts and Step-by-Step Breakdown: 
+# 📰 Fake News Detector — Streamlit App
 
+A lightweight NLP-powered web app that classifies news articles as **Real** or **Fake** using an LSTM-based deep learning model. The dataset is hosted on **Hugging Face**, and the app is fully deployable on **Streamlit Cloud**.
 
-1. Data Loading and Initial Preparation (Cells 1-6)Libraries: The core library, pandas, is imported for data manipulation.Data Loading: Two datasets, Fake.csv and True.csv, are loaded into separate DataFrames.Labeling (Binary Classification): This is a crucial step to turn the two separate datasets into a single supervised learning problem.A new column 'label' is added to the Fake DataFrame and set to 0 (representing "Fake").A new column 'label' is added to the true DataFrame and set to 1 (representing "Real" or "True").
+---
 
-  
-2. Data Cleaning and Merging (Cells 7-14)Feature Selection: Irrelevant columns ('title', 'date', 'subject') are dropped from both DataFrames. This focuses the model solely on the article content ('text').Data Concatenation: The Fake and true DataFrames are combined into a single DataFrame named News using pd.concat, with ignore_index=True to reset the index.Data Quality Checks:News.info() confirms the presence of 44,898 entries with no missing (Non-Null) values.News.isnull().sum() confirms no null values.News.duplicated().sum() identifies 6,251 duplicated rows.News.drop_duplicates(inplace=True) removes these duplicates to prevent the model from overfitting to redundant data.
+## 🚀 Features
 
+* End-to-end text preprocessing (cleaning, tokenization, lemmatization)
+* LSTM neural network trained on a custom fake news dataset
+* Hugging Face dataset loading via direct raw URLs
+* Interactive Streamlit UI for predictions
+* Real-time confidence scoring and visualization
 
-3. Text Preprocessing (Cells 15-17)This is the NLP core of the project, preparing raw text for the neural network.Imports and Setup: Libraries like re (regular expressions) and nltk (for NLP tools) are imported.Preprocessing Function (process_text): This function applies a series of cleaning and normalization steps:Lowercasing: Converts all text to lowercase.Punctuation/Number Removal: Removes all non-alphabetic characters.Whitespace/Single Character Removal: Cleans up extra spaces and removes isolated single letters, which are usually meaningless noise.Tokenization: Splits the text into individual words (words).Lemmatization: Reduces words to their base or dictionary form (e.g., 'running' becomes 'run').Stop Word & Length Filtering: Removes common, uninformative words (stop words) and any remaining words with 3 or fewer characters.Output: Joins the processed tokens back into a single string.Application: The process_text function is applied to the entire text column to create the cleaned_text list.
+---
 
+## 📂 Project Structure
 
-4. Splitting Data and Vectorization (Cells 18, 22, 25-26)Feature/Target Split: The 'text' column (the input features) is separated from the 'label' column (the target variable).x (text) is extracted and converted to a list of strings (texts).y (labels) is the target.Train-Test Split: The data is divided into training (80%) and testing (20%) sets using train_test_split.Tokenization & Vocabulary Creation:Tokenizer from Keras is fitted only on the training data (X_train).It maps every unique word to an integer index, creating a vocabulary of 90,788 unique words (v).The text data is converted into sequences of these integer indices (X_train and X_test).Padding:pad_sequences is used to ensure all input sequences have the same length (maxlen = 150).This is necessary for the neural network, as it requires fixed-size input arrays.
+```
+.
+├── app.py
+├── requirements.txt
+├── README.md
+└── notebook.ipynb
+```
 
+---
 
-5. Deep Learning Model Setup (Cells 28-31)Label Encoding:The integer labels (0 and 1) are transformed using LabelEncoder.Crucially, tf.keras.utils.to_categorical is used to convert the labels into a one-hot encoded format (e.g., $0 \to [1, 0]$ and $1 \to [0, 1]$). This is required for the chosen categorical_crossentropy loss function.Model Architecture (LSTM): A sequential deep learning model is built using the Keras Functional API:Input Layer (inputt): Defines the fixed input sequence length (150).Embedding Layer: Maps each word index to a dense vector of size 100. v+1 is used for the vocabulary size to account for the reserved index 0 (for padding).Dropout (0.5): A regularization technique to prevent overfitting.LSTM Layer (150 units, return_sequences=True): The core layer for processing sequential data. return_sequences=True means it outputs a sequence for the next layer.Dropout (0.5): Second dropout layer.GlobalMaxPooling1D: Reduces the sequence of vectors to a single, fixed-length vector by taking the maximum value across the time dimension for each feature.Dense Layer (64 units, ReLU): A standard hidden layer for learning non-linear feature combinations.Dropout (0.5): Third dropout layer.Output Layer (2 units, Softmax): Outputs a probability distribution over the two classes (Fake/Real).Compilation: The model is configured with the Adam optimizer, a low learning rate of $0.0001$, and categorical_crossentropy loss. The metric tracked is accuracy.
+## 🛠 Tech Stack
 
+* **Frontend:** Streamlit
+* **NLP:** NLTK
+* **Data Processing:** Pandas, NumPy
+* **Modeling:** TensorFlow, Keras, Scikit-learn
+* **Visualization:** Matplotlib, Seaborn
+* **Dataset Hosting:** Hugging Face Datasets
 
-6. Model Training and Evaluation (Cells 32, 38-40)Training: The model is trained for 15 epochs on the training data, with validation performed on the test data after each epoch.The training accuracy quickly approaches 100%.The validation accuracy peaks around 97% and remains stable.Visualizing Performance: The plots clearly show:Training accuracy is much higher than validation accuracy, and training loss drops significantly lower than validation loss.The validation loss begins to flatten or slightly increase after a few epochs (around epoch 5-7), while the training loss continues to fall.Conclusion: This suggests the model is slightly overfitting to the training data.Final Evaluation:The final test accuracy is reported as 0.9715 (97.15%).Confusion Matrix: The matrix visualizes the performance:True Negatives (Fake classified as Fake): $\approx 4230$True Positives (Real classified as Real): $\approx 3570$False Negatives (Real classified as Fake): $\approx 100$False Positives (Fake classified as Real): $\approx 150$Conclusion: The model has very high performance with a small number of misclassifications, showing it is a strong fake news detector.
+---
+
+## 📦 Dataset
+
+Dataset used for training:
+[https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset](https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset)
+
+Contains two CSV files: `Fake.csv` and `True.csv`.
+
+---
+
+## 🧠 Model Overview
+
+* Tokenizer + padded sequences
+* Embedding layer (100 dimensions)
+* LSTM layer (150 units)
+* Dropout regularization
+* Global Max Pooling
+* Dense layers with ReLU and Softmax
+* Trained for 15 epochs with 80/20 train-test split
+
+---
+
+## ▶️ Running Locally
+
+### 1. Clone the repository
+
+```
+git clone https://github.com/<your-username>/<repo>.git
+cd <repo>
+```
+
+### 2. Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+### 3. Run the Streamlit app
+
+```
+streamlit run app.py
+```
+
+---
+
+## 🌐 Deployment
+
+Fully compatible with **Streamlit Cloud**.
+Push your repo → connect Streamlit → deploy.
+
+---
+
+## 📌 Future Enhancements
+
+* Switch to transformer-based models (BERT/DistilBERT)
+* Add URL-based scraping and prediction
+* Add a REST API endpoint
+* Improve UI design and styling
+
+---
+
+## 🤝 Acknowledgements
+
+Built using open-source tools and a custom Hugging Face dataset.
