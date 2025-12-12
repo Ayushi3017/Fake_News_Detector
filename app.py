@@ -23,8 +23,11 @@ nltk.download('wordnet')
 
 # ---------------------------
 # Load pre-trained model & tokenizer
-# ---------------------------
-model = load_model("model.h5")  # make sure this file is in your repo
+# --------------------------
+import tensorflow as tf
+
+# Load the model
+model = tf.keras.models.load_model("saved_model")
 tokenizer_word_index = pd.read_pickle("tokenizer_word_index.pkl")  # your tokenizer mapping
 
 tokenizer = Tokenizer()
