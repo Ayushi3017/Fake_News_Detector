@@ -1,19 +1,12 @@
 streamlit==1.40.0
 
-# Data Manipulation
 pandas==2.2.0
 numpy==1.26.4
 
-# NLP
 nltk==3.8.1
-
-# ML / DL
-tensorflow==2.16.1
 scikit-learn==1.4.1
 
-# Visualization
 matplotlib==3.8.3
 seaborn==0.13.2
 
-# Utilities
 requests==2.31.0
