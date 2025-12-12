@@ -1,0 +1,2 @@
+import pandas as pd
+pd.to_pickle(tokenizer.word_index, "tokenizer_word_index.pkl")
