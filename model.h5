@@ -1,1 +1,3 @@
 model.save("model.h5")
+pd.to_pickle(tokenizer.word_index, "tokenizer_word_index.pkl")
+
