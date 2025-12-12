@@ -1,8 +1,8 @@
-streamlit==1.40.0
-pandas==2.2.0
-numpy==1.26.4
-nltk==3.8.1
-scikit-learn==1.4.1
-matplotlib==3.8.3
-seaborn==0.13.2
-tensorflow-cpu==2.10.0
+pandas
+numpy
+nltk
+tensorflow
+scikit-learn
+matplotlib
+seaborn
+streamlit
