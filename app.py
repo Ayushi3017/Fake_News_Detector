@@ -10,8 +10,11 @@ import pandas as pd
 # ### Load the  Data
 
 
-Fake=pd.read_csv("Fake.csv")
-true=pd.read_csv("True.csv")
+# Fake=pd.read_csv("Fake.csv")
+# true=pd.read_csv("True.csv")
+
+Fake=pd.read_csv('https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset/blob/main/Fake.csv')
+true=pd.read_csv('https://huggingface.co/datasets/AyushiAyushi3017/fake-news-detector-dataset/blob/main/True.csv')
 
 Fake['label']=0
 
@@ -39,161 +42,6 @@ News.duplicated().sum()
 
 News.drop_duplicates(inplace=True)
 News.duplicated().sum()
-
-import re
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-import numpy as np
-import zipfile
-import os
-
-# --- NLTK Setup and Data Unzipping (Corrected) ---
-
-download_dir = "/kaggle/working/nltk_data/"
-os.makedirs(download_dir, exist_ok=True)
-nltk.data.path.append(download_dir)
-
-# Download necessary NLTK packages
-nltk.download('wordnet', download_dir)
-nltk.download('omw-1.4', download_dir)
-nltk.download('punkt', download_dir)
-nltk.download('stopwords', download_dir)
-
-def unzip_nltk_data(package_name, target_dir):
-    zip_path = os.path.join(target_dir, 'corpora', f'{package_name}.zip')
-    extract_path = os.path.join(target_dir, 'corpora')
-
-    if os.path.exists(zip_path):
-        try:
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_path)
-        except Exception:
-            pass
-
-unzip_nltk_data('wordnet', download_dir)
-unzip_nltk_data('omw-1.4', download_dir)
-
-# Initialize tools globally for the function to use
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words("english"))
-
-
-# --- Text Preprocessing Function (Refined) ---
-
-def process_text(text):
-    # Ensure input is treated as a string
-    text = str(text)
-
-    # 1. Convert to lowercase
-    text = text.lower()
-
-    # 2. Remove all non-alphabetic characters (preserving spaces)
-    text = re.sub(r'[^a-z\s]', ' ', text)
-
-    # 3. Remove single characters and extra white space
-    # Remove all single characters from text (e.g., 'a', 'b', 'c')
-    text = re.sub(r'\s+[a-z]\s+', ' ', text)
-    # Remove extra white space from text
-    text = re.sub(r'\s+', ' ', text, flags=re.I)
-
-    # 4. Tokenize the text
-    words = word_tokenize(text)
-
-    # 5. Lemmatization, Stop Word Removal, and Length Filtering
-    processed_words = [
-        lemmatizer.lemmatize(word)
-        for word in words
-        if word not in stop_words and len(word) > 3 # Filter stop words and short words
-    ]
-
-    # 6. Return the tokens joined back into a single string for vectorization
-    return " ".join(processed_words)
-
-import re
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-import numpy as np
-import zipfile
-import os
-
-# --- NLTK Setup and Data Downloads (Robust to handle different environments) ---
-
-# Define a custom path for downloads, often necessary in environments like Kaggle/Colab
-download_dir = "/kaggle/working/nltk_data/"
-os.makedirs(download_dir, exist_ok=True)
-nltk.data.path.append(download_dir)
-
-# Download all necessary NLTK packages
-print("Downloading NLTK resources...")
-try:
-    nltk.download('wordnet', download_dir)
-    nltk.download('omw-1.4', download_dir)
-    nltk.download('punkt', download_dir)
-    nltk.download('stopwords', download_dir)
-    print("NLTK downloads complete.")
-except Exception as e:
-    print(f"Error during NLTK download: {e}")
-    # Proceed, but extraction might still be needed
-
-# Function to manually unzip packages if the environment requires it (like your initial setup)
-def unzip_nltk_data(package_name, target_dir):
-    zip_path = os.path.join(target_dir, 'corpora', f'{package_name}.zip')
-    extract_path = os.path.join(target_dir, 'corpora')
-
-    if os.path.exists(zip_path):
-        try:
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_path)
-            print(f"Unzipped {package_name}.")
-        except Exception:
-            pass
-
-unzip_nltk_data('wordnet', download_dir)
-unzip_nltk_data('omw-1.4', download_dir)
-
-# Initialize global tools after downloads are confirmed
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words("english"))
-
-
-# --- Text Preprocessing Function (Refined) ---
-
-def process_text(text):
-    """
-    Cleans, tokenizes, lemmatizes, and removes stop words/short words from text.
-    Returns the processed text as a single string.
-    """
-    # Ensure input is treated as a string
-    text = str(text)
-
-    # 1. Convert to lowercase
-    text = text.lower()
-
-    # 2. Remove all non-alphabetic characters (preserving spaces)
-    text = re.sub(r'[^a-z\s]', ' ', text)
-
-    # 3. Remove single characters and extra white space
-    # Remove all single characters from text (e.g., 'a', 'b', 'c')
-    text = re.sub(r'\s+[a-z]\s+', ' ', text)
-    # Remove extra white space from text
-    text = re.sub(r'\s+', ' ', text, flags=re.I)
-
-    # 4. Tokenize the text
-    words = word_tokenize(text)
-
-    # 5. Lemmatization, Stop Word Removal, and Length Filtering
-    processed_words = [
-        lemmatizer.lemmatize(word)
-        for word in words
-        if word not in stop_words and len(word) > 3 # Filter stop words and short words
-    ]
-
-    # 6. Return the tokens joined back into a single string for vectorization
-    return " ".join(processed_words)
 
 import re
 import nltk
