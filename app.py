@@ -92,7 +92,33 @@ st.markdown("""
     The results are based on the model's prediction and are not a guarantee.
 """)
 
-user_input = st.text_area("Paste news text here:", height=200)
+    # ---------------------------
+# Streamlit UI
+# ---------------------------
+st.set_page_config(page_title="Fake News Detector", layout="centered")
+st.title("📰 Fake News Detector")
+
+user_input = st.text_area("Paste news text here:",height=200)
 
 if st.button("Predict"):
-    if not user_input
+    # FIX: The colon (:) is required here after the 'if' condition.
+    if not user_input.strip():
+        st.warning("Please enter some text to classify.")
+    else:
+        # 1. Preprocessing
+        cleaned = process_text(user_input)
+        
+        # 2. Tokenization and Padding
+        seq = tokenizer.texts_to_sequences([cleaned])
+        padded = pad_sequences(seq, maxlen=maxlen)
+
+        # 3. Prediction
+        pred = model.predict(padded)
+        label = np.argmax(pred, axis=1)[0]
+        confidence = pred[0][label]
+
+        # 4. Display Results
+        if label == 0:
+            st.error(f"🚨 Likely Fake (Confidence: {confidence:.2f})")
+        else:
+            st.success(f"✅ Likely Real (Confidence: {confidence:.2f})")
