@@ -53,7 +53,7 @@ tokenizer = load_tokenizer()
 # -----------------------------
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("saved_model")
+    return tf.keras.models.load_model("Saved_model")
 
 model = load_model()
 
