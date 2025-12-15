@@ -7,6 +7,17 @@ from keras.layers import TFSMLayer
 # ==============================
 # 1. Load model
 # ==============================
+import os
+from keras.layers import TFSMLayer
+
+BASE_DIR = os.path.dirname(__file__)  # path of the current app.py
+MODEL_PATH = os.path.join(BASE_DIR, "saved_model")
+
+model = TFSMLayer(MODEL_PATH, call_endpoint="serve")
+
+
+
+
 model = TFSMLayer("saved_model", call_endpoint="serve")
 
 # ==============================
