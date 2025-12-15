@@ -1,3 +1,4 @@
+streamlit
 pandas
 numpy
 nltk
@@ -5,4 +6,3 @@ tensorflow
 scikit-learn
 matplotlib
 seaborn
-streamlit
