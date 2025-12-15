@@ -24,6 +24,13 @@ with open("label_encoder.pkl", "rb") as f:
     label_encoder = pickle.load(f)
 
 
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+def preprocess(text):
+    seq = tokenizer.texts_to_sequences([text])
+    padded = pad_sequences(seq, maxlen=150)  # maxlen same as training
+    return padded
+
 # ==============================
 # NLTK setup
 # ==============================
@@ -35,6 +42,17 @@ nltk.download('omw-1.4')
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words('english'))
 
+from keras.layers import TFSMLayer
+import tensorflow as tf
+
+# Load the model
+model = TFSMLayer("saved_model", call_endpoint="serve")
+
+# Function to predict
+def predict(text_seq_tensor):
+    # text_seq_tensor should be preprocessed exactly like training (padded sequence, shape=(1,150))
+    preds = model(text_seq_tensor)
+    return preds.numpy()  # returns numpy array
 
 # ==============================
 # ==============================
