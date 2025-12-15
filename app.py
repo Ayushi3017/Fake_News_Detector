@@ -3,17 +3,19 @@ import pandas as pd
 import numpy as np
 import re
 import pickle
-import tensorflow as tf
-import nltk
+import os
 
+import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+
+import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# -----------------------------
-# NLTK SETUP (REQUIRED ON CLOUD)
-# -----------------------------
+# ---------------------------
+# NLTK Downloads
+# ---------------------------
 nltk.download("punkt")
 nltk.download("stopwords")
 nltk.download("wordnet")
@@ -22,9 +24,31 @@ nltk.download("omw-1.4")
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
-# -----------------------------
-# TEXT PREPROCESSING (UNCHANGED LOGIC)
-# -----------------------------
+# ---------------------------
+# Load Tokenizer
+# ---------------------------
+@st.cache_resource
+def load_tokenizer():
+    tokenizer_path = os.path.join(os.getcwd(), "tokenizer.pkl")
+    with open(tokenizer_path, "rb") as f:
+        return pickle.load(f)
+
+tokenizer = load_tokenizer()
+
+# ---------------------------
+# Load Model
+# ---------------------------
+@st.cache_resource
+def load_saved_model():
+    saved_model_path = os.path.join(os.getcwd(), "Saved_model")
+    return tf.keras.models.load_model(saved_model_path)
+
+model = load_saved_model()
+maxlen = 150
+
+# ---------------------------
+# Text Preprocessing
+# ---------------------------
 def process_text(text):
     text = str(text).lower()
     text = re.sub(r"[^a-z\s]", " ", text)
@@ -38,51 +62,27 @@ def process_text(text):
     ]
     return " ".join(tokens)
 
-# -----------------------------
-# LOAD TOKENIZER
-# -----------------------------
-import pickle
-
-@st.cache_resource
-def load_tokenizer():
-    with open("tokenizer.pkl", "rb") as f:
-        return pickle.load(f)
-
-tokenizer = load_tokenizer()
-
-# -----------------------------
-# LOAD MODEL (SavedModel ONLY)
-# -----------------------------
-@st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("Saved_model")
-
-model = load_model()
-
-# -----------------------------
-# STREAMLIT UI
-# -----------------------------
-st.set_page_config(page_title="Fake News Detector", page_icon="📰")
+# ---------------------------
+# Streamlit UI
+# ---------------------------
+st.set_page_config(page_title="Fake News Detector", layout="centered")
 st.title("📰 Fake News Detector")
-st.write("Paste a news article below and let the model decide.")
 
-user_input = st.text_area("Enter News Text", height=200)
+user_input = st.text_area("Paste news text here:")
 
-# -----------------------------
-# PREDICTION
-# -----------------------------
-if st.button("Detect"):
-    if user_input.strip() == "":
-        st.warning("Please enter some text.")
+if st.button("Predict"):
+    if not user_input.strip():
+        st.warning("Please enter some text to classify.")
     else:
         cleaned = process_text(user_input)
         seq = tokenizer.texts_to_sequences([cleaned])
-        padded = pad_sequences(seq, maxlen=150)
+        padded = pad_sequences(seq, maxlen=maxlen)
 
-        prediction = model.predict(padded)
-        label = np.argmax(prediction)
+        pred = model.predict(padded)
+        label = np.argmax(pred, axis=1)[0]
+        confidence = pred[0][label]
 
         if label == 0:
-            st.error("🚨 This news is likely **FAKE**")
+            st.error(f"🚨 Likely Fake (Confidence: {confidence:.2f})")
         else:
-            st.success("✅ This news is likely **REAL**")
+            st.success(f"✅ Likely Real (Confidence: {confidence:.2f})")
