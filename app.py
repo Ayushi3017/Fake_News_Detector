@@ -41,6 +41,8 @@ def process_text(text):
 # -----------------------------
 # LOAD TOKENIZER
 # -----------------------------
+import pickle
+
 @st.cache_resource
 def load_tokenizer():
     with open("tokenizer.pkl", "rb") as f:
