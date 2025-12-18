@@ -1,0 +1,5 @@
+saved_model/variables/* filter=lfs diff=lfs merge=lfs -text
+saved_model/variables/*.data-* filter=lfs diff=lfs merge=lfs -text
+saved_model/variables/*.index filter=lfs diff=lfs merge=lfs -text
+saved_model/*.pb filter=lfs diff=lfs merge=lfs -text
+*.pb filter=lfs diff=lfs merge=lfs -text
